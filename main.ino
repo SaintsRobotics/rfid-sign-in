@@ -52,54 +52,64 @@ void setup(void) {
   Serial.println("Waiting for an ISO14443A Card ...");
 }
 
-char testChars[] = {'d','e','a','d','b','e','e','f','d','e','a','d','b','e','e','f'};
 uint8_t keya[6] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
+uint8_t i = 0;
+uint8_t data[16]; //read to this buffer
+uint8_t write_data[] = { i,'s','a','i','n','t','s',0, 0, 0, 0, 0, 0, 0, 0, 0 }; //data to write
+
+void readAndWriteString() {
+  Serial.println("read and write string called");
+  Serial.setTimeout(3000); //10 seconds wait
+  while(true) {
+      String incomingString = Serial.readString();
+      Serial.println(incomingString);
+  }
+  Serial.println("read and write string done");
+}
 
 void loop(void) {
+  readAndWriteString();
   uint8_t success;
   uint8_t uid[] = { 0, 0, 0, 0, 0, 0, 0 };  // Buffer to store the returned UID
-  uint8_t uidLength;                        // Length of the UID (4 or 7 bytes depending on ISO14443A card type)
-  uint8_t data[16]; //data to write
-  
+  uint8_t uidLength;                       // Length of the UID (4 or 7 bytes depending on ISO14443A card type)
+
+  write_data[0] = i;
+  i+=1;
+  //uint8_t write_data[] = { i,'s','a','i','n','t','s',0, 0, 0, 0, 0, 0, 0, 0, 0 }; //data to write
+
 //check if id is right
   if (nfc.readPassiveTargetID(PN532_MIFARE_ISO14443A, uid, &uidLength)) {
     //auth block
     if (nfc.mifareclassic_AuthenticateBlock(uid, uidLength, 4, 0, keya)) {
-        Serial.print("block authenticated: ");
+        Serial.print("block authenticated: \n");
         //read block
         if (nfc.mifareclassic_ReadDataBlock(4, data))
         {
           // Data seems to have been read ... spit it out
-          Serial.println("Reading Block 4:");
-          nfc.PrintHexChar(data, 16)
-          Serial.println("");
-      
-          // Wait a bit before reading the card again
-          delay(1000);
-        }
-        //write data
-        memcpy(data, (const uint8_t[]){ 'a', 'd', 'a', 'f', 'r', 'u', 'i', 't', '.', 'c', 'o', 'm', 0, 0, 0, 0 }, sizeof data);
-        if (nfc.mifareclassic_WriteDataBlock (4, data)) {
-          Serial.println("data written!");
-          delay(1000);
-        }
-        if (nfc.mifareclassic_ReadDataBlock(4, data))
-        {
-          // Data seems to have been read ... spit it out
-          Serial.println("Reading Block 4 (second time):");
+          Serial.println("Reading [INITIAL]:");
           nfc.PrintHexChar(data, 16);
           Serial.println("");
       
           // Wait a bit before reading the card again
           delay(1000);
         }
+        
+        //write data
+        
+        if (nfc.mifareclassic_WriteDataBlock (4, write_data)) {
+          Serial.println("data written!");
+          Serial.println("");
+          delay(1000);
+        }
+        if (nfc.mifareclassic_ReadDataBlock(4, data))
+        {
+          Serial.println("Reading [SECOND]:");
+          nfc.PrintHexChar(data, 16);
+          Serial.println("");
+          delay(1000);
+        }
     }
-    // Display some basic information about the card
-    Serial.println("Found an ISO14443A card");
-    Serial.print("  UID Length: ");Serial.print(uidLength, DEC);Serial.println(" bytes");
-    Serial.print("  UID Value: ");
-    
-    nfc.PrintHex(uid, uidLength);
+
     Serial.println("");
   }
 
