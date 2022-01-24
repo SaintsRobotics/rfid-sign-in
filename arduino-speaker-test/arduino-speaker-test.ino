@@ -28,97 +28,106 @@ Adafruit_PN532 nfc(PN532_SCK, PN532_MISO, PN532_MOSI, PN532_SS);
 // Or use this line for a breakout or shield with an I2C connection:
 // Adafruit_PN532 nfc(PN532_IRQ, PN532_RESET);
 
+uint32_t incrementor;
+String tmp; //for reading from user and making sure actual input is read
+
 void setup(void)
 {
   Serial.begin(115200);
-  // while (!Serial) delay(10); // for Leonardo/Micro/Zero
 
-  Serial.println("Hello!");
+  Serial.println("starting");
+  Serial.println("please input an initial value for incrementor - just entering will default to 0");
+
+  while (true)
+  {
+    tmp = Serial.readString();
+    if (tmp != "")
+    {
+      break;
+    }
+  }
+  incrementor = tmp.toInt();
+
+  if (incrementor == 0)
+  {
+    Serial.println("Starting at 0");
+  }
+  else
+  {
+    Serial.print("Starting count at ");
+    Serial.println(incrementor);
+  }
+
+  pinMode(8, OUTPUT);
 
   nfc.begin();
-
-  uint32_t versiondata = nfc.getFirmwareVersion();
-  if (!versiondata)
-  {
-    Serial.print("Didn't find PN53x board");
-    while (1)
-      ; // halt
-  }
-  // Got ok data, print it out!
-  Serial.print("Found chip PN5");
-  Serial.println((versiondata >> 24) & 0xFF, HEX);
-  Serial.print("Firmware ver. ");
-  Serial.print((versiondata >> 16) & 0xFF, DEC);
-  Serial.print('.');
-  Serial.println((versiondata >> 8) & 0xFF, DEC);
-
-  // configure board to read RFID tags
   nfc.SAMConfig();
-
-  Serial.println("Waiting for an ISO14443A Card ...");
 }
 
-uint8_t keya[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
-uint8_t i = 0;
-uint8_t data[16];                                                                    // read to this buffer
-uint8_t write_data[] = {i, 's', 'a', 'i', 'n', 't', 's', 0, 0, 0, 0, 0, 0, 0, 0, 0}; // data to writ
+uint8_t keya[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}; //for auth
+uint8_t data[4];                                        //for reading
+//uint8_t write_data[4] = {0}; //data to write - incrementor
+uint8_t uid[] = {0, 0, 0, 0, 0, 0, 0}; // Buffer to store the returned UID
+uint8_t uidLength;                     // Length of the UID (4 or 7 bytes depending on ISO14443A card type)
+uint8_t write_data[4] = {0};
 
-String userString = "";
 void loop(void)
 {
-  uint8_t success;
-  uint8_t uid[] = {0, 0, 0, 0, 0, 0, 0}; // Buffer to store the returned UID
-  uint8_t uidLength;                     // Length of the UID (4 or 7 bytes depending on ISO14443A card type)
 
-  write_data[0] = i;
-  i += 1;
-  // uint8_t write_data[] = { i,'s','a','i','n','t','s',0, 0, 0, 0, 0, 0, 0, 0, 0 }; //data to write
+  write_data[3] = incrementor;
+  write_data[2] = incrementor >> 8;
+  write_data[1] = incrementor >> 16;
+  write_data[0] = incrementor >> 24;
 
-  // check if id is right
   if (nfc.readPassiveTargetID(PN532_MIFARE_ISO14443A, uid, &uidLength))
-  {
     // auth block
     if (nfc.mifareclassic_AuthenticateBlock(uid, uidLength, 4, 0, keya))
     {
-      Serial.print("block authenticated: \n");
+      //Serial.print("[block authenticated]\n");
       // read block
       if (nfc.mifareclassic_ReadDataBlock(4, data))
       {
         // Data seems to have been read ... spit it out
-        Serial.println("Reading [INITIAL]:");
-        nfc.PrintHexChar(data, 16);
-        Serial.println("");
+        Serial.println("[reading]: ");
+        nfc.PrintHexChar(data, 4);
+        Serial.println();
 
         // Wait a bit before reading the card again
         delay(1000);
       }
-      // get user string
-      uint8_t userStringBuf[17];
-      userString = Serial.readString();
-
-      if (userString != "")
-      {
-        userString.getBytes(userStringBuf, 17);
-        Serial.println(userString);
-      }
 
       // write data
-
-      if (nfc.mifareclassic_WriteDataBlock(4, userStringBuf))
+      if (nfc.mifareclassic_WriteDataBlock(4, write_data))
       {
-        Serial.println("data written!");
-        Serial.println("");
+        Serial.println("data written!\n");
         delay(1000);
       }
       if (nfc.mifareclassic_ReadDataBlock(4, data))
       {
-        Serial.println("Reading [SECOND]:");
-        nfc.PrintHexChar(data, 16);
-        Serial.println("");
+        Serial.println("[reading again for sanity]: ");
+        nfc.PrintHexChar(data, 4);
+        Serial.println();
         delay(1000);
       }
+      /*if (nfc.mifareclassic_AuthenticateBlock(uid, uidLength, 9, 0, keya))
+          {
+            if (nfc.mifareclassic_WriteDataBlock(9, write_data))
+            {
+              Serial.println("[saints data written]\n");
+              delay(500);
+            }
+          }*/
     }
 
-    Serial.println("");
-  }
-};
+  Serial.print("[done] with ");
+  Serial.println(incrementor);
+  /*while (true) {
+           tmp = Serial.readString();
+           if (tmp != "") {
+            break;
+           }
+        }*/
+  tone(8, 880, 300);
+  delay(3000);
+  incrementor += 1;
+}
