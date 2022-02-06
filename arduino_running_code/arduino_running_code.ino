@@ -13,23 +13,8 @@
 #define PN532_IRQ (2)
 #define PN532_RESET (3) // Not connected by default on the NFC Shield
 
-// Uncomment just _one_ line below depending on how your breakout or shield
-// is connected to the Arduino:
-
-// Use this line for a breakout with a SPI connection:
+// Breakout with a SPI connection:
 Adafruit_PN532 nfc(PN532_SCK, PN532_MISO, PN532_MOSI, PN532_SS);
-
-// Use this line for a breakout with a hardware SPI connection.  Note that
-// the PN532 SCK, MOSI, and MISO pins need to be connected to the Arduino's
-// hardware SPI SCK, MOSI, and MISO pins.  On an Arduino Uno these are
-// SCK = 13, MOSI = 11, MISO = 12.  The SS line can be any digital IO pin.
-// Adafruit_PN532 nfc(PN532_SS);
-
-// Or use this line for a breakout or shield with an I2C connection:
-// Adafruit_PN532 nfc(PN532_IRQ, PN532_RESET);
-
-uint32_t incrementor;
-String tmp; //for reading from user and making sure actual input is read
 
 void setup(void)
 {
@@ -49,21 +34,21 @@ uint8_t uidLength;                     // Length of the UID (4 or 7 bytes depend
 
 void loop(void)
 {
-    if (nfc.readPassiveTargetID(PN532_MIFARE_ISO14443A, uid, &uidLength))
-        // auth block
-        if (nfc.mifareclassic_AuthenticateBlock(uid, uidLength, 4, 0, keya))
-        {
-            //Serial.print("[block authenticated]\n");
-            // read block
-            if (nfc.mifareclassic_ReadDataBlock(4, data))
-            {
-                nfc.PrintHex(data, 4);
-                //Serial.println();
-
-                // Wait a bit before reading the card again
-                delay(1000);
-            }
-        }
+    if (
+      nfc.readPassiveTargetID(PN532_MIFARE_ISO14443A, uid, &uidLength) && //detect
+      nfc.mifareclassic_AuthenticateBlock(uid, uidLength, 4, 0, keya) && //auth
+      nfc.mifareclassic_ReadDataBlock(4, data)) //read
+      {
+        nfc.PrintHex(data, 4); //write hex data of ID on read tag to serial for python to parse
+        tone(8, 880, 150);
+        //this delay is necessary but adds far too much latency if misconfigured - stay around 500ms
+        delay(500);
+    } else {
+      //2 beeps for error in detect/auth/read
+      tone(8, 700, 150);
+      delay(175);
+      tone(8, 700, 150);
+    }
 }
 
 void f_you() {

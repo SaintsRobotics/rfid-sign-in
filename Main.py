@@ -1,9 +1,10 @@
 import serial
 import time
 import sqlite3
-import datetime
+from datetime import datetime
 
-ser = serial.Serial("/dev/ttyACM0", baudrate=115200, timeout=1)
+#ser = serial.Serial("/dev/ttyACM0", baudrate=115200, timeout=1)
+ser = serial.Serial("COM8", baudrate=115200, timeout=1)
 print("CONNECTED")
 
 """con = sqlite3.connect('sign_ins.db')
@@ -24,6 +25,16 @@ def sign_in(id):
         print(x)
 
 """
+
+def sign_in(uid):
+    now = datetime.now() # current date and time
+    now = now.strftime("%Y/%m/%d %H:%M:%S")
+    #create the file before running
+    #open("sign-ins.csv", "w").write("\"timestamp\", \"uid\"\n")
+    with open("sign-ins.csv", "a+") as f:
+        f.write(f'\"{now}\", {uid}\n')
+        print("wrote: " +  f"{now}, {uid}\n")
+
 while True:
     resp = ser.read_until("\n").decode("utf-8")
     if resp:
@@ -33,13 +44,10 @@ while True:
         except:
             continue
         sign_in(int(resp, 16))
-        time.sleep(5)
+        time.sleep(2)
 
 
 # data csv
 #sign in csv
-
-def sign_in():
-
 
 con.close()
