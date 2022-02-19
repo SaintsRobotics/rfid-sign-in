@@ -37,7 +37,6 @@ void loop(void)
   bool detect = nfc.readPassiveTargetID(PN532_MIFARE_ISO14443A, uid, &uidLength);
   bool auth = nfc.mifareclassic_AuthenticateBlock(uid, uidLength, 4, 0, keya);
   bool read = nfc.mifareclassic_ReadDataBlock(4, data);
-  Serial.println(String(detect) + " " + String(auth) + " " + String(read));
 
   if (detect && auth && read)
   {
