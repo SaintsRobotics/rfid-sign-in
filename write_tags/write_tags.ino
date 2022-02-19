@@ -17,7 +17,7 @@
 Adafruit_PN532 nfc(PN532_SCK, PN532_MISO, PN532_MOSI, PN532_SS);
 
 uint32_t incrementor;
-String tmp; //for reading from user and making sure actual input is read
+String tmp; // for reading from user and making sure actual input is read
 
 void setup(void)
 {
@@ -52,9 +52,9 @@ void setup(void)
   nfc.SAMConfig();
 }
 
-uint8_t keya[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}; //for auth
-uint8_t data[4];                                        //for reading
-//uint8_t write_data[4] = {0}; //data to write - incrementor
+uint8_t keya[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}; // for auth
+uint8_t data[4];                                        // for reading
+// uint8_t write_data[4] = {0}; //data to write - incrementor
 uint8_t uid[] = {0, 0, 0, 0, 0, 0, 0}; // Buffer to store the returned UID
 uint8_t uidLength;                     // Length of the UID (4 or 7 bytes depending on ISO14443A card type)
 uint8_t write_data[4] = {0};
@@ -71,8 +71,8 @@ void loop(void)
     // auth block
     if (nfc.mifareclassic_AuthenticateBlock(uid, uidLength, 4, 0, keya))
     {
-      //Serial.print("[block authenticated]\n");
-      // read block
+      // Serial.print("[block authenticated]\n");
+      //  read block
       if (nfc.mifareclassic_ReadDataBlock(4, data))
       {
         // Data seems to have been read ... spit it out
