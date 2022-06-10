@@ -23,23 +23,24 @@ print("CONNECTED")
 #### MAKING SURE THE CSV FILE EXISTS and creating it if it doesn't ####
 if not os.path.exists(ATTENDANCE_LOG_FILEPATH):
     with open(ATTENDANCE_LOG_FILEPATH, 'w') as file:
-        csv.DictWriter(file, fieldnames=ATTENDANCE_LOG_FILEPATH, quoting=csv.QUOTE_NONNUMERIC).writeheader()
+        csv.DictWriter(file, fieldnames=ATTENDANCE_LOG_HEADER, quoting=csv.QUOTE_ALL).writeheader()
         file.close()
 
 
-def get_student_info(rfidTagNumber):
+def get_student_info(rfidTagNumber: int):
     """Looks up the user's first and last name and student ID number in the database.
     Returns a dictionary of the student's """
     with open(STUDENTS_FILEPATH, 'r') as file:
-        for row in csv.DictReader(STUDENTS_FILEPATH):
-            # print(type(row), row)
-            if row["RFID_TAG_NUMBER"] == rfidTagNumber:
+        for row in csv.DictReader(file):
+            if int(row["RFID_TAG_NUMBER"]) == rfidTagNumber:
                 return row
         file.close()
+    print("STUDENT NOT FOUND")
+    # TODO: make a better interface for this
     return {}
 
 
-def log_user(rfidTagNumber):
+def log_user(rfidTagNumber: int):
     """
     Loggs the user sign in/out in the CSV file.
     uid: the number that the user's rfid tag was assigned.  we started at 1, and just counted up from there
@@ -52,14 +53,10 @@ def log_user(rfidTagNumber):
 
     row["RFID_TAG_NUMBER"] = rfidTagNumber
 
-    studentInfo = get_student_info(rfidTagNumber)
-
-    row["FIRST_NAME"] = studentInfo["FIRST_NAME"]
-    row["LAST_NAME"] = studentInfo["LAST_NAME"]
-    row["STUDENT_ID"] = studentInfo["STUDENT_ID"]
+    row.update(get_student_info(rfidTagNumber))
 
     with open(ATTENDANCE_LOG_FILEPATH, "a+") as file:
-        csv.DictWriter(file, fieldnames=ATTENDANCE_LOG_HEADER, quoting=csv.QUOTE_NONNUMERIC).writerow(row)
+        csv.DictWriter(file, fieldnames=ATTENDANCE_LOG_HEADER, quoting=csv.QUOTE_ALL).writerow(row)
 
 
 while True:
@@ -67,5 +64,5 @@ while True:
 
     if arduinoResponse:
         arduinoResponse = arduinoResponse.replace("0x", "").replace(" ", "").rstrip()
-
+        print("FOUND RFID TAG NUMBER", int(arduinoResponse, 16))
         log_user(int(arduinoResponse, 16))
