@@ -35,7 +35,7 @@ def get_student_info(rfidTagNumber: int):
             if int(row["RFID_TAG_NUMBER"]) == rfidTagNumber:
                 return row
         file.close()
-    print("STUDENT NOT FOUND")
+    print("STUDENT NOT FOUND.  RFID TAG #", rfidTagNumber)
     # TODO: make a better interface for this
     return {}
 
@@ -53,10 +53,14 @@ def log_user(rfidTagNumber: int):
 
     row["RFID_TAG_NUMBER"] = rfidTagNumber
 
-    row.update(get_student_info(rfidTagNumber))
+    student_info = get_student_info(rfidTagNumber)
+    if student_info: # only writes to the attendance log if the RFID tag number is valid
+        row.update(student_info)
 
-    with open(ATTENDANCE_LOG_FILEPATH, "a+") as file:
-        csv.DictWriter(file, fieldnames=ATTENDANCE_LOG_HEADER, quoting=csv.QUOTE_ALL).writerow(row)
+        with open(ATTENDANCE_LOG_FILEPATH, "a+") as file:
+            csv.DictWriter(file, fieldnames=ATTENDANCE_LOG_HEADER, quoting=csv.QUOTE_ALL).writerow(row)
+
+    print(row["FIRST_NAME"], row["LAST_NAME"])
 
 
 while True:
@@ -64,5 +68,4 @@ while True:
 
     if arduinoResponse:
         arduinoResponse = arduinoResponse.replace("0x", "").replace(" ", "").rstrip()
-        print("FOUND RFID TAG NUMBER", int(arduinoResponse, 16))
         log_user(int(arduinoResponse, 16))
