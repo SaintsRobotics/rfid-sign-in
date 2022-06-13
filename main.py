@@ -3,12 +3,13 @@ from datetime import datetime, timedelta
 import os
 import csv
 
-TIMESTAMP_FORMAT = "%Y/%m/%d %H:%M:%S"
+TIMESTAMP_FORMAT = "%m/%d/%Y %H:%M:%S"
 
 STUDENTS_FILEPATH = 'students.csv'  # this is the CSV file where student names and IDs are stored.  Do not write to this file
 STUDENTS_HEADER = ["FIRST_NAME", "LAST_NAME", "STUDENT_ID", "RFID_TAG_NUMBER"]
 
-ATTENDANCE_LOG_FILEPATH = 'attendance.csv'  # this is the CSV file that the sign ins and outs are logged
+ATTENDANCE_LOG_FILEPATH = 'attendance-' + str(datetime.now().month) + '-' + str(datetime.now().day) + '-' + str(datetime.now().year) + \
+    '.csv'  # this is the CSV file that the sign ins and outs are logged
 ATTENDANCE_LOG_HEADER = ["TIMESTAMP"] + STUDENTS_HEADER
 
 ######## CONNECTING TO SERIAL BUS ########
@@ -54,7 +55,7 @@ def log_user(rfidTagNumber: int):
     row["RFID_TAG_NUMBER"] = rfidTagNumber
 
     student_info = get_student_info(rfidTagNumber)
-    if student_info: # only writes to the attendance log if the RFID tag number is valid
+    if student_info:  # only writes to the attendance log if the RFID tag number is valid
         row.update(student_info)
 
         with open(ATTENDANCE_LOG_FILEPATH, "a+") as file:
