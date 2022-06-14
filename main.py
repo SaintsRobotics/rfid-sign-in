@@ -43,7 +43,7 @@ def get_student_info(rfidTagNumber: int):
 
 def log_user(rfidTagNumber: int):
     """
-    Loggs the user sign in/out in the CSV file.
+    Logs the user sign in/out in the CSV file.
     uid: the number that the user's rfid tag was assigned.  we started at 1, and just counted up from there
     """
 
