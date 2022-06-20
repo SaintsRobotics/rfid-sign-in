@@ -3,6 +3,7 @@
 #include <Adafruit_PN532.h>
 
 const int SPEAKER_PIN = 8;
+const int BLOCK_SIZE = 16;
 
 // If using the breakout with SPI, define the pins for SPI communication.
 #define PN532_SCK (2)
@@ -18,12 +19,18 @@ const int SPEAKER_PIN = 8;
 // Use this line for a breakout with a SPI connection:
 Adafruit_PN532 nfc(PN532_SCK, PN532_MISO, PN532_MOSI, PN532_SS);
 
-uint32_t incrementor;
-String tmp; // for reading from user and making sure actual input is read
+int incrementor;
 
 void setup(void)
 {
   Serial.begin(115200);
+
+  pinMode(SPEAKER_PIN, OUTPUT);
+
+  nfc.begin();
+  nfc.SAMConfig();
+
+  startupNoise();
 
   Serial.println("starting");
   Serial.println("please enter an initial value for incrementor - just pressing enter will default to 0");
@@ -33,33 +40,36 @@ void setup(void)
     // waits until the user enters something before continuing on
   }
 
-  int incrementor = Serial.parseInt();
+  incrementor = Serial.parseInt();
 
   Serial.println("Starting at " + String(incrementor));
-
-  pinMode(SPEAKER_PIN, OUTPUT);
-
-  nfc.begin();
-  nfc.SAMConfig();
 }
 
-uint8_t keya[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}; // for auth
+uint8_t KEYA[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}; // for auth
 uint8_t uid[] = {0, 0, 0, 0, 0, 0, 0};                  // Buffer to store the returned UID
 uint8_t uidLength;                                      // Length of the UID (4 or 7 bytes depending on ISO14443A card type)
 
 void loop(void)
 {
-  uint8_t data[4];
+  uint8_t data[BLOCK_SIZE];
+  for (int i = 0; i < BLOCK_SIZE; i++)
+  {
+    data[i] = NULL;
+  }
+
   for (int i = 0; i < sizeof(String(incrementor)); i++)
   {
-    data[i] = String(incrementor)[i];
+    if (!String(incrementor)[i] == NULL)
+    {
+      data[i] = String(incrementor)[i];
+    }
   }
 
   bool detect = nfc.readPassiveTargetID(PN532_MIFARE_ISO14443A, uid, &uidLength);
-  bool auth = nfc.mifareclassic_AuthenticateBlock(uid, uidLength, 4, 0, keya);
-  bool write = nfc.mifareclassic_WriteDataBlock(4, data);
+  bool auth = nfc.mifareclassic_AuthenticateBlock(uid, uidLength, 4, 0, KEYA);
+  bool writeTag = nfc.mifareclassic_WriteDataBlock(4, data);
 
-  if (detect && auth && write)
+  if (detect && auth && writeTag)
   {
     Serial.print("Wrote RFID tag ");
     Serial.println(incrementor);
@@ -71,6 +81,8 @@ void loop(void)
   {
     failNoise();
   }
+
+  delay(1500);
 }
 
 void startupNoise()
