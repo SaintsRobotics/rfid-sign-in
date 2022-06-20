@@ -16,11 +16,13 @@
 // Breakout with a SPI connection:
 Adafruit_PN532 nfc(PN532_SCK, PN532_MISO, PN532_MOSI, PN532_SS);
 
+const int SPEAKER_PIN = 8;
+
 void setup(void)
 {
   Serial.begin(115200);
 
-  pinMode(8, OUTPUT);
+  pinMode(SPEAKER_PIN, OUTPUT);
 
   nfc.begin();
   nfc.SAMConfig();
@@ -41,81 +43,27 @@ void loop(void)
   if (detect && auth && read)
   {
     nfc.PrintHex(data, 4); // write hex data of ID on read tag to serial for python to parse
-    tone(8, 880, 150);
+    successNoise();
+
     // this delay is necessary but adds far too much latency if misconfigured - stay around 500ms
     delay(1500);
   }
   else
   {
-    // 2 beeps for error in detect/auth/read
-    tone(8, 700, 150);
-    delay(175);
-    tone(8, 700, 150);
+    failNoise();
   }
 }
 
-void f_you()
+void startupNoise()
 {
-  // f
-  tone(8, 880, 100);
-  delay(100);
-  tone(8, 880, 100);
-  delay(100);
-  tone(8, 880, 300);
-  delay(100);
-  tone(8, 880, 100);
-  delay(100);
-  delay(300);
-  // u
-  tone(8, 880, 100);
-  delay(100);
-  tone(8, 880, 100);
-  delay(100);
-  tone(8, 880, 300);
-  delay(100);
-  delay(300);
-  // c
-  tone(8, 880, 300);
-  delay(100);
-  tone(8, 880, 100);
-  delay(100);
-  tone(8, 880, 300);
-  delay(100);
-  tone(8, 880, 100);
-  delay(100);
-  delay(300);
-  // k
-  tone(8, 880, 300);
-  delay(100);
-  tone(8, 880, 100);
-  delay(100);
-  tone(8, 880, 300);
-  delay(100);
-  delay(300);
-  // space
-  delay(700);
-  // y
-  tone(8, 880, 300);
-  delay(100);
-  tone(8, 880, 100);
-  delay(100);
-  tone(8, 880, 300);
-  delay(100);
-  tone(8, 880, 300);
-  delay(100);
-  // o
-  tone(8, 880, 300);
-  delay(100);
-  tone(8, 880, 300);
-  delay(100);
-  tone(8, 880, 300);
-  delay(100);
-  // u
-  tone(8, 880, 100);
-  delay(100);
-  tone(8, 880, 100);
-  delay(100);
-  tone(8, 880, 300);
-  delay(100);
-  //..-. ..- -.-. -.- / -.-- --- ..-
+}
+void successNoise()
+{
+  tone(SPEAKER_PIN, 880, 150);
+}
+void failNoise()
+{
+  tone(8, 700, 150);
+  delay(175);
+  tone(8, 700, 150);
 }
