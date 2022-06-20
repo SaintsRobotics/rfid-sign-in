@@ -44,14 +44,14 @@ void loop(void)
   {
     nfc.PrintHex(data, 4); // write hex data of ID on read tag to serial for python to parse
     successNoise();
-
-    // this delay is necessary but adds far too much latency if misconfigured - stay around 500ms
-    delay(1500);
   }
   else
   {
     failNoise();
   }
+
+  // this delay is necessary but adds far too much latency if misconfigured - stay around 500ms
+  delay(1500);
 }
 
 void startupNoise()
