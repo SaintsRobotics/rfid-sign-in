@@ -26,6 +26,7 @@ void setup(void)
 
   nfc.begin();
   nfc.SAMConfig();
+  startupNoise();
 }
 
 uint8_t keya[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}; // for auth
@@ -56,6 +57,11 @@ void loop(void)
 
 void startupNoise()
 {
+  tone(SPEAKER_PIN, 1760, 50);
+  delay(50);
+  tone(SPEAKER_PIN, 2217, 50);
+  delay(50);
+  tone(SPEAKER_PIN, 2637, 50);
 }
 void successNoise()
 {
@@ -63,7 +69,7 @@ void successNoise()
 }
 void failNoise()
 {
-  tone(8, 700, 150);
+  tone(SPEAKER_PIN, 700, 150);
   delay(175);
-  tone(8, 700, 150);
+  tone(SPEAKER_PIN, 700, 150);
 }
