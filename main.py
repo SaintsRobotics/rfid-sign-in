@@ -65,8 +65,7 @@ def log_user(rfidTagNumber: int):
 
 
 while True:
-    arduinoResponse = ser.read_until("\n").decode("utf-8")
+    arduinoResponse = ser.readline().decode('utf-8', 'ignore').rstrip()
 
     if arduinoResponse:
-        arduinoResponse = arduinoResponse.replace("0x", "").replace(" ", "").rstrip()
-        log_user(int(arduinoResponse, 16))
+        log_user(int(arduinoResponse))
