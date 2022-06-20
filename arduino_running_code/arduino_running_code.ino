@@ -43,7 +43,11 @@ void loop(void)
 
   if (detect && auth && read)
   {
-    nfc.PrintHex(data, 4); // write hex data of ID on read tag to serial for python to parse
+    for (int i = 0; i < sizeof(data); i++)
+    {
+      Serial.print(data[i]);
+      Serial.println();
+    }
     successNoise();
   }
   else
