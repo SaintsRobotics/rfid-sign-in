@@ -67,10 +67,12 @@ void startupNoise()
   delay(50);
   tone(SPEAKER_PIN, 2637, 50);
 }
+
 void successNoise()
 {
   tone(SPEAKER_PIN, 880, 150);
 }
+
 void failNoise()
 {
   tone(SPEAKER_PIN, 700, 150);

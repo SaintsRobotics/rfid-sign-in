@@ -2,6 +2,8 @@
 #include <SPI.h>
 #include <Adafruit_PN532.h>
 
+const int SPEAKER_PIN = 8;
+
 // If using the breakout with SPI, define the pins for SPI communication.
 #define PN532_SCK (2)
 #define PN532_MOSI (3)
@@ -24,98 +26,70 @@ void setup(void)
   Serial.begin(115200);
 
   Serial.println("starting");
-  Serial.println("please input an initial value for incrementor - just entering will default to 0");
+  Serial.println("please enter an initial value for incrementor - just pressing enter will default to 0");
 
-  while (true)
+  while (!Serial.available())
   {
-    tmp = Serial.readString();
-    if (tmp != "")
-    {
-      break;
-    }
-  }
-  incrementor = tmp.toInt();
-
-  if (incrementor == 0)
-  {
-    Serial.println("Starting at 0");
-  }
-  else
-  {
-    Serial.print("Starting count at ");
-    Serial.println(incrementor);
+    // waits until the user enters something before continuing on
   }
 
-  pinMode(8, OUTPUT);
+  int incrementor = Serial.parseInt();
+
+  Serial.println("Starting at " + String(incrementor));
+
+  pinMode(SPEAKER_PIN, OUTPUT);
 
   nfc.begin();
   nfc.SAMConfig();
 }
 
 uint8_t keya[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}; // for auth
-uint8_t data[4];                                        // for reading
-// uint8_t write_data[4] = {0}; //data to write - incrementor
-uint8_t uid[] = {0, 0, 0, 0, 0, 0, 0}; // Buffer to store the returned UID
-uint8_t uidLength;                     // Length of the UID (4 or 7 bytes depending on ISO14443A card type)
-uint8_t write_data[4] = {0};
+uint8_t uid[] = {0, 0, 0, 0, 0, 0, 0};                  // Buffer to store the returned UID
+uint8_t uidLength;                                      // Length of the UID (4 or 7 bytes depending on ISO14443A card type)
 
 void loop(void)
 {
+  uint8_t data[4];
+  for (int i = 0; i < sizeof(String(incrementor)); i++)
+  {
+    data[i] = String(incrementor)[i];
+  }
 
-  write_data[3] = incrementor;
-  write_data[2] = incrementor >> 8;
-  write_data[1] = incrementor >> 16;
-  write_data[0] = incrementor >> 24;
+  bool detect = nfc.readPassiveTargetID(PN532_MIFARE_ISO14443A, uid, &uidLength);
+  bool auth = nfc.mifareclassic_AuthenticateBlock(uid, uidLength, 4, 0, keya);
+  bool write = nfc.mifareclassic_WriteDataBlock(4, data);
 
-  if (nfc.readPassiveTargetID(PN532_MIFARE_ISO14443A, uid, &uidLength))
-    // auth block
-    if (nfc.mifareclassic_AuthenticateBlock(uid, uidLength, 4, 0, keya))
-    {
-      // Serial.print("[block authenticated]\n");
-      //  read block
-      if (nfc.mifareclassic_ReadDataBlock(4, data))
-      {
-        // Data seems to have been read ... spit it out
-        Serial.println("[reading]: ");
-        nfc.PrintHexChar(data, 4);
-        Serial.println();
+  if (detect && auth && write)
+  {
+    Serial.print("Wrote RFID tag ");
+    Serial.println(incrementor);
 
-        // Wait a bit before reading the card again
-        delay(1000);
-      }
+    successNoise();
+    incrementor += 1;
+  }
+  else
+  {
+    failNoise();
+  }
+}
 
-      // write data
-      if (nfc.mifareclassic_WriteDataBlock(4, write_data))
-      {
-        Serial.println("data written!\n");
-        delay(1000);
-      }
-      if (nfc.mifareclassic_ReadDataBlock(4, data))
-      {
-        Serial.println("[reading again for sanity]: ");
-        nfc.PrintHexChar(data, 4);
-        Serial.println();
-        delay(1000);
-      }
-      /*if (nfc.mifareclassic_AuthenticateBlock(uid, uidLength, 9, 0, keya))
-          {
-            if (nfc.mifareclassic_WriteDataBlock(9, write_data))
-            {
-              Serial.println("[saints data written]\n");
-              delay(500);
-            }
-          }*/
-    }
+void startupNoise()
+{
+  tone(SPEAKER_PIN, 1760, 50);
+  delay(50);
+  tone(SPEAKER_PIN, 2217, 50);
+  delay(50);
+  tone(SPEAKER_PIN, 2637, 50);
+}
 
-  Serial.print("[done] with ");
-  Serial.println(incrementor);
-  /*while (true) {
-           tmp = Serial.readString();
-           if (tmp != "") {
-            break;
-           }
-        }*/
-  tone(8, 880, 300);
-  delay(3000);
-  incrementor += 1;
+void successNoise()
+{
+  tone(SPEAKER_PIN, 880, 150);
+}
+
+void failNoise()
+{
+  tone(SPEAKER_PIN, 700, 150);
+  delay(175);
+  tone(SPEAKER_PIN, 700, 150);
 }
