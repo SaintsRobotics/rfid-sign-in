@@ -1,0 +1,38 @@
+<html>
+  <head>
+    <title>Attendance View Page</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  </head>
+  <body>
+    {% if csv %}
+    <br>
+    <h2>Today's Attendance:</h2>
+    <br>
+    <table id="Attendance">
+      {% for row in csv %}
+        <tr>
+        {% for col in row.split(",") %}
+        <td>{{ col }}</td>
+        {% endfor %}
+        </tr>
+      {% endfor %}
+    </table>
+
+    {% else %}
+    <div class="container">
+      <h1>Please login</h1>
+      <br>
+      <form action="" method="post">
+        <input type="text" placeholder="Username" name="username" value="{{
+          request.form.username }}">
+         <input type="password" placeholder="Password" name="password" value="{{
+          request.form.password }}"> <br>
+        <input class="btn btn-default" type="submit" value="Login">
+      </form>
+      {% if error %}
+        <p class="error"><strong>Error:</strong> {{ error }}
+      {% endif %}
+    </div>
+    {% endif %}
+  </body>
+</html>

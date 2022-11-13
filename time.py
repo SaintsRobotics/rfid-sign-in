@@ -5,7 +5,10 @@
 # run at startup
 
 import os
+from time import sleep
 import requests
+
+sleep(60) # So that when script is run on startup, it will have the pi systems fully enabled
 
 try:
     response = requests.get("http://worldtimeapi.org/api/timezone/America/Los_Angeles")
